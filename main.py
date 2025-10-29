@@ -1,4 +1,6 @@
 import os
+import threading
+from flask import Flask
 from telebot import TeleBot
 from dotenv import load_dotenv
 from builder_agent import BuilderAgent
@@ -10,14 +12,16 @@ GEMINI_KEY = os.getenv("GEMINI_API_KEY")
 
 bot = TeleBot(BOT_TOKEN)
 agent = BuilderAgent(api_key=GEMINI_KEY)
+app = Flask(__name__)
 
+# Telegram Bot Commands
 @bot.message_handler(commands=['start'])
 def start(message):
     bot.reply_to(
         message,
         "👋 Hi! I'm your AI Builder Agent.\n"
-        "Use /build <goal> to create something.\n"
-        "Use /deploy to deploy generated bot."
+        "Use /build <goal> to create a script.\n"
+        "Use /deploy to deploy your generated code."
     )
 
 @bot.message_handler(commands=['build'])
@@ -37,4 +41,16 @@ def deploy(message):
     result = agent.deploy_to_render(folder)
     bot.reply_to(message, result)
 
-bot.infinity_polling()
+# Web endpoint for health check
+@app.route("/")
+def index():
+    return "🤖 Telegram Bot + Builder Agent is running on Render!"
+
+if __name__ == "__main__":
+    # Run Telegram bot in background thread
+    threading.Thread(target=bot.infinity_polling, daemon=True).start()
+
+    # Run Flask server on Render port
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
+
