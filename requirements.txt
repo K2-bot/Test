@@ -1,21 +1,8 @@
-pytelegrambotapi==4.22.1
-Flask==3.0.3
-requests==2.32.3
-google-generativeai==0.8.2
-python-dotenv==1.0.1
-pyTelegramBotAPI==4.12.0
-
-# Env
-python-dotenv==1.0.0
-
-# Google GenAI SDK (Gemini 2.0)
-google-genai==0.1.0
-
-# Optional: Image processing (if your agent uses images)
-Pillow==10.0.0
-
-# Optional: Requests (for any HTTP requests)
-requests==2.31.0
-
-# Optional: For Render CLI integration if using subprocess
-# render-cli can be installed separately outside pip
+pytelegrambotapi
+Flask
+google-generativeai
+pyTelegramBotAPI
+python-dotenv
+google-genai
+Pillow
+requests
