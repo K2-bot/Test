@@ -2,7 +2,7 @@ import google.generativeai as genai
 import subprocess, os
 
 class BuilderAgent:
-    def init(self, api_key):  # ← အမှန် version
+    def __init__(self, api_key):  # ✅ fixed
         genai.configure(api_key=api_key)
         self.model = genai.GenerativeModel("gemini-1.5-pro")
 
@@ -29,3 +29,4 @@ class BuilderAgent:
         except Exception as e:
             print("❌ Test failed:", e)
             return False
+
