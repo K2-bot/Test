@@ -1,26 +1,23 @@
 import subprocess
 import os
 from google import genai
-from google.genai import types
 
 class BuilderAgent:
     def __init__(self, api_key=None):
-        # ✅ Setup API key
         self.api_key = api_key or os.getenv("GEMINI_API_KEY")
         if not self.api_key:
             raise ValueError("❌ GEMINI_API_KEY not provided.")
         self.client = genai.Client(api_key=self.api_key)
 
     def list_models(self):
-        """📋 Show all available Gemini models"""
         print("🔍 Available Gemini models:")
         for m in self.client.models.list():
             print(" -", m.name)
 
     def build(self, goal):
-        """🧩 Generate Python code for a requested goal"""
-        prompt = f"Write a complete Python script for: {goal}. Include explanations as comments."
-        print("🧠 Generating code from Gemini...")
+        """Generate Python code for a goal"""
+        prompt = f"Write a complete Python script for: {goal}. Include comments explaining the code."
+        print("🧠 Generating code...")
         try:
             response = self.client.models.generate_content(
                 model="gemini-2.0-flash",
@@ -75,4 +72,5 @@ class BuilderAgent:
             return "🚀 Deployed successfully on Render!"
         except Exception as e:
             return f"⚠️ Deploy failed: {e}"
+
 
