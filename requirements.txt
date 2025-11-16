@@ -1,8 +1,10 @@
-pytelegrambotapi
-Flask
-google-generativeai
-pyTelegramBotAPI
-python-dotenv
-google-genai
-Pillow
+pandas
+openpyxl
+telebot
 requests
+python-dotenv
+supabase
+apscheduler
+flask
+pyTelegramBotAPI
+supabase
