@@ -1,30 +1,55 @@
 import os
 import logging
 import json
+import asyncio
+from aiohttp import web
 from telegram import Update
-from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, MessageHandler, filters
+from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, MessageHandler, filters, Application
 from supabase import create_client, Client
 
-# Render Environment Variables မှ Key များကို ဆွဲယူခြင်း
+# ၁။ Environment Variables
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
+PORT = int(os.environ.get("PORT", 10000)) # Render က ပေးမယ့် Port
 
 # Supabase ချိတ်ဆက်ခြင်း
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
+# Logging
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO
+)
 
+# ၂။ Dummy Web Server (Render မအိပ်အောင် Port ဖွင့်ပေးခြင်း)
+async def health_check(request):
+    return web.Response(text="Bot is running alive!")
+
+async def start_web_server():
+    app = web.Application()
+    app.router.add_get('/', health_check)
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, '0.0.0.0', PORT)
+    await site.start()
+    logging.info(f"🕸️ Web Server started on port {PORT}")
+
+# ၃။ Bot Commands
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
-    user_data = {"telegram_id": user.id, "full_name": user.full_name}
+    # User မှတ်ပုံတင်ခြင်း
     try:
-        supabase.table('users').upsert(user_data).execute()
+        supabase.table('users').upsert({
+            "telegram_id": user.id,
+            "full_name": user.full_name
+        }).execute()
     except Exception as e:
         print(f"User Register Error: {e}")
 
     await update.message.reply_text(
-        f"မင်္ဂလာပါ {user.full_name} ခင်ဗျာ! 👋\nဈေးဝယ်ရန် အောက်ပါ *'Shop Now'* ခလုတ်ကို နှိပ်ပါ 👇",
+        f"မင်္ဂလာပါ {user.full_name} ခင်ဗျာ! 👋\n"
+        "ဈေးဝယ်ရန် အောက်ပါ *'Shop Now'* ခလုတ်ကို နှိပ်ပါ 👇",
         parse_mode='Markdown'
     )
 
@@ -91,8 +116,17 @@ async def web_app_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
         print(f"Error: {e}")
         await update.message.reply_text("❌ System Error")
 
+# ၄။ Init Function (Bot စ run ချိန်မှာ Web Server ပါ တွဲ run မည်)
+async def post_init(application: Application):
+    asyncio.create_task(start_web_server())
+
 if __name__ == '__main__':
-    app = ApplicationBuilder().token(BOT_TOKEN).build()
+    # Build Application
+    app = ApplicationBuilder().token(BOT_TOKEN).post_init(post_init).build()
+    
+    # Handlers
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.StatusUpdate.WEB_APP_DATA, web_app_data))
+    
+    print("Bot is starting...")
     app.run_polling()
